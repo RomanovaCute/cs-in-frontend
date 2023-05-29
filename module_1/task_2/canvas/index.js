@@ -11,7 +11,7 @@
 // Uint8ClampedArray
 // Uint8Array
 
-// getImageData() // {data: Uint8Array} // [0] [1] [2] [3] [0] [1] [2] - 'это матрица
+// getImageData() // {data: Uint8ClmpedArray} // [0] [1] [2] [3] | [0] [1] [2] [3] - 'это матрица
 
 // | 255 | 45 | 0   | 1 |
 // | 23  | 4  | 156 | 0 |
