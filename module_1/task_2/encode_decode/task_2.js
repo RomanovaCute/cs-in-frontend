@@ -21,7 +21,7 @@ const schema = [
     [16, 'ascii']  // 16 бит 2 аски символа (1 символ аски = 8 бит)
 ];
 
-function normalizedSchema(schema) {
+function normalizeSchema(schema) {
     return schema.flatMap(([size, type]) => {
         if(type === 'ascii') {
             const res =  new Array(size / 8)
@@ -68,13 +68,13 @@ function getOffsets(normalizedSchema) {
     return offsets
 }
 
-// функция, создающая маску
+// функция, создающая маску. нужна для усечения числа (строку битов) до нужного размера, который указан в схеме
 function createMask(size, offset = 0) {
     return (2 ** 32 - 1 >>> 32 - size) << offset
 }
 
 function encode(data, schema) {
-    const normalizedSchema = normalizedSchema(schema)
+    const normalizedSchema = normalizeSchema(schema)
 
     const size = getViewMaxSize(normalizedSchema)
 
@@ -121,3 +121,43 @@ function encode(data, schema) {
 //     [8, 'ascii'],
 //     [8, 'ascii', {partial: true}] // флаг partial говорит, что данный символ является часть одного общего
 // ]
+
+// ДЕКОДИРОВАНИЕ
+function decode(data, schema) {
+    const normalizedSchema = normalizeSchema(schema)
+
+    const size = getViewMaxSize(normalizedSchema)
+
+    const offsets = getOffsets(normalizedSchema)
+
+    const buffer = new globalThis[`Uint${size}Array`](data)
+
+    const res = []
+
+    offsets.forEach(([size, {offset, index, type, partial}], ) => {
+        const bytes = (buffer[index] & createMask(size, offset)) >> offset;
+
+        switch(type) {
+            case 'number': res.push(bytes)
+            break;
+
+            case 'boolean': res.push(bytes > 0)
+            break;
+
+            case 'ascii': 
+                const char = String.fromCharCode(bytes)
+
+                if(partial) {
+                    res[res.push - 1] += char
+                } else {
+                    res.push(char)
+                }
+                break;
+        }
+    })
+
+    return res;
+
+}
+
+console.log(decode(encode([2, 3, true, false, 'ab'], schema), schema));
